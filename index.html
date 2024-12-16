@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>NASA Pic of the Day</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>NASA Astronomy Picture of the Day</h1>
+    <div class="apod-section">
+      <button id="fetchAPOD" class="fetch-button">Get Today's Picture</button>
+      <div id="apod-container" class="apod-container"></div>
+    </div>
+
+    <hr />
+
+    <div class="form-section">
+      <h2>Your Reaction</h2>
+      <form id="reactionForm" class="reaction-form">
+        <label for="rating">Rating (1 - 5):</label>
+        <select id="rating" name="rating" required>
+          <option value="" disabled selected>Select Rating</option>
+          <option value="1">1 (Poor)</option>
+          <option value="2">2</option>
+          <option value="3">3 (Neutral)</option>
+          <option value="4">4</option>
+          <option value="5">5 (Excellent)</option>
+        </select>
+        
+        <label for="comment">Comment:</label>
+        <textarea id="comment" name="comment" rows="3" placeholder="What do you think about today's picture?" required></textarea>
+
+        <button type="submit" class="submit-button">Submit Reaction</button>
+      </form>
+
+      <div id="thankYouMessage" class="thank-you-message" style="display: none;">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('fetchAPOD').addEventListener('click', async () => {
+      try {
+        const res = await fetch('/apod');
+        const data = await res.json();
+        
+        const container = document.getElementById('apod-container');
+        container.innerHTML = `
+          <h2>${data.title} (${data.date})</h2>
+          <img src="${data.hdurl}" alt="APOD" class="apod-image" />
+          <p class="apod-explanation">${data.explanation}</p>
+        `;
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    const reactionForm = document.getElementById('reactionForm');
+    const thankYouMessage = document.getElementById('thankYouMessage');
+
+    reactionForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const rating = document.getElementById('rating').value;
+      const comment = document.getElementById('comment').value;
+
+      try {
+        const response = await fetch('/reaction', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rating, comment })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          thankYouMessage.style.display = 'block';
+          thankYouMessage.textContent = data.message;
+
+          reactionForm.reset();
+        } else {
+          thankYouMessage.style.display = 'block';
+          thankYouMessage.textContent = 'Error';
+        }
+      } catch (error) {
+        console.error('Error', error);
+        thankYouMessage.style.display = 'block';
+        thankYouMessage.textContent = 'Error';
+      }
+    });
+  </script>
+</body>
+</html>
